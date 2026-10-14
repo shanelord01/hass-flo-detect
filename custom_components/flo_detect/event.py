@@ -18,13 +18,9 @@ def _flo_device(
     hass: HomeAssistant, coordinator: FloDetectDataUpdateCoordinator
 ) -> dr.DeviceEntry | None:
     """Return the device the Flo integration registered for this valve."""
-    device_registry = dr.async_get(hass)
-    for device in dr.async_entries_for_config_entry(
-        device_registry, coordinator.flo_entry.entry_id
-    ):
-        if (FLO_DOMAIN, coordinator.device_id) in device.identifiers:
-            return device
-    return None
+    return dr.async_get(hass).async_get_device_by_identifier(
+        (FLO_DOMAIN, coordinator.device_id), coordinator.flo_entry.entry_id
+    )
 
 
 async def async_setup_entry(

@@ -170,10 +170,12 @@ async def test_entity_attaches_to_flo_device(
     await hass.async_block_till_done()
 
     device_registry = dr.async_get(hass)
-    (flo_device,) = dr.async_entries_for_config_entry(device_registry, FLO_ENTRY_ID)
+    flo_device = device_registry.async_get_device_by_identifier(
+        ("flo", DEVICE_ID), FLO_ENTRY_ID
+    )
     entry = er.async_get(hass).async_get(_entity_id(hass))
     assert entry.device_id == flo_device.id
-    assert flo_device.config_entries == {FLO_ENTRY_ID}
+    assert flo_device.config_entry_id == FLO_ENTRY_ID
     assert not dr.async_entries_for_config_entry(device_registry, config_entry.entry_id)
 
 
@@ -194,3 +196,6 @@ async def test_removes_device_left_by_old_version(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert device_registry.async_get(stray.id) is None
+    assert device_registry.async_get_device_by_identifier(
+        ("flo", DEVICE_ID), FLO_ENTRY_ID
+    )
