@@ -4,7 +4,7 @@ from typing import override
 
 from homeassistant.components.event import EventEntity
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -14,6 +14,19 @@ from .coordinator import FloDetectConfigEntry, FloDetectDataUpdateCoordinator
 PARALLEL_UPDATES = 0
 
 
+def _flo_device(
+    hass: HomeAssistant, coordinator: FloDetectDataUpdateCoordinator
+) -> dr.DeviceEntry | None:
+    """Return the device the Flo integration registered for this valve."""
+    device_registry = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(
+        device_registry, coordinator.flo_entry.entry_id
+    ):
+        if (FLO_DOMAIN, coordinator.device_id) in device.identifiers:
+            return device
+    return None
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: FloDetectConfigEntry,
@@ -21,7 +34,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Flo Detect event entities."""
     async_add_entities(
-        FloDetectWaterUseEvent(coordinator)
+        FloDetectWaterUseEvent(coordinator, _flo_device(hass, coordinator))
         for coordinator in config_entry.runtime_data.coordinators
     )
 
@@ -39,14 +52,18 @@ class FloDetectWaterUseEvent(
     _attr_translation_key = "water_use"
     _attr_event_types = EVENT_TYPES
 
-    def __init__(self, coordinator: FloDetectDataUpdateCoordinator) -> None:
+    def __init__(
+        self,
+        coordinator: FloDetectDataUpdateCoordinator,
+        flo_device: dr.DeviceEntry | None,
+    ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.mac_address}_flo_detect_water_use"
-        # Attach to the device the Flo integration created.
-        self._attr_device_info = DeviceInfo(
-            identifiers={(FLO_DOMAIN, coordinator.device_id)}
-        )
+        # Attach to the Flo integration's device for the valve. Device info with
+        # the Flo identifier would create a separate device for this entry.
+        # (In core Flo this entity subclasses FloEntity and uses its device info.)
+        self.device_entry = flo_device
 
     @override
     async def async_added_to_hass(self) -> None:

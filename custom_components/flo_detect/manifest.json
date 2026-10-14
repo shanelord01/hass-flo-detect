@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/shanelord01/hass-flo-detect/issues",
   "loggers": ["aioflo"],
   "requirements": ["aioflo>=2026.9.4"],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }

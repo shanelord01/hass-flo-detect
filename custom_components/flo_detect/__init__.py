@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
+from homeassistant.helpers import device_registry as dr
 
 from .const import CONF_FLO_ENTRY_ID, DEVICE_TYPE_DETECTOR, DOMAIN, LOGGER
 from .coordinator import (
@@ -58,8 +59,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: FloDetectConfigEntry) ->
     )
 
     entry.runtime_data = FloDetectRuntimeData(coordinators=coordinators)
+    _async_remove_own_devices(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+def _async_remove_own_devices(hass: HomeAssistant, entry: FloDetectConfigEntry) -> None:
+    """Detach this entry from devices only it owns.
+
+    The entities attach to the Flo integration's devices and this entry owns
+    none of its own. Version 0.1.0 created a duplicate device per valve; this
+    removes it.
+    """
+    device_registry = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(device_registry, entry.entry_id):
+        if device.config_entries == {entry.entry_id}:
+            device_registry.async_update_device(
+                device.id, remove_config_entry_id=entry.entry_id
+            )
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: FloDetectConfigEntry) -> bool:

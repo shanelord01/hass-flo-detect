@@ -12,6 +12,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.flo_detect.const import CONF_FLO_ENTRY_ID, DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
 
 FLO_ENTRY_ID = "flo-entry-1"
@@ -70,6 +71,13 @@ def flo_entry(hass: HomeAssistant, flo_client: SimpleNamespace) -> MockConfigEnt
         state=ConfigEntryState.LOADED,
     )
     entry.add_to_hass(hass)
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=FLO_ENTRY_ID,
+        identifiers={("flo", DEVICE_ID)},
+        connections={(dr.CONNECTION_NETWORK_MAC, MAC_ADDRESS)},
+        manufacturer="Flo by Moen",
+        name="Shasam",
+    )
     entry.runtime_data = SimpleNamespace(
         client=flo_client,
         devices=[

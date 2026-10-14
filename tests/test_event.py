@@ -13,10 +13,16 @@ from pytest_homeassistant_custom_component.common import (
 from custom_components.flo_detect.const import DOMAIN, UPDATE_INTERVAL
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from .conftest import MAC_ADDRESS, flo_detect_event, flo_detect_payload
+from .conftest import (
+    DEVICE_ID,
+    FLO_ENTRY_ID,
+    MAC_ADDRESS,
+    flo_detect_event,
+    flo_detect_payload,
+)
 
 UNIQUE_ID = f"{MAC_ADDRESS}_flo_detect_water_use"
 
@@ -154,3 +160,33 @@ async def test_not_ready_until_flo_loads(
     flo_entry.mock_state(hass, ConfigEntryState.SETUP_RETRY)
     assert not await hass.config_entries.async_setup(config_entry.entry_id)
     assert config_entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_entity_attaches_to_flo_device(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """The event entity sits on the Flo device and adds no device of its own."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    device_registry = dr.async_get(hass)
+    flo_device = device_registry.async_get_device(identifiers={("flo", DEVICE_ID)})
+    entry = er.async_get(hass).async_get(_entity_id(hass))
+    assert entry.device_id == flo_device.id
+    assert flo_device.config_entries == {FLO_ENTRY_ID}
+    assert not dr.async_entries_for_config_entry(device_registry, config_entry.entry_id)
+
+
+async def test_removes_device_left_by_old_version(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """A device only this entry owns (created by 0.1.0) is removed on setup."""
+    device_registry = dr.async_get(hass)
+    stray = device_registry.async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        identifiers={("flo_detect", "stray")},
+        name="Flo Detect (Flo account)",
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert device_registry.async_get(stray.id) is None
