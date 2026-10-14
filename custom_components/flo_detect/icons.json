@@ -1,0 +1,23 @@
+{
+  "entity": {
+    "event": {
+      "water_use": {
+        "default": "mdi:water",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "faucet": "mdi:faucet",
+              "shower": "mdi:shower-head",
+              "bathtub": "mdi:bathtub",
+              "toilet": "mdi:toilet",
+              "appliance": "mdi:washing-machine",
+              "irrigation": "mdi:sprinkler-variant",
+              "pool": "mdi:pool",
+              "other": "mdi:water"
+            }
+          }
+        }
+      }
+    }
+  }
+}

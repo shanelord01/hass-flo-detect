@@ -1,0 +1,49 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Flo Detect",
+        "description": "Adds Flo Detect water-use events for the devices of a Flo account that is already set up in Home Assistant. It uses that account's sign-in, so no credentials are needed.",
+        "data": {
+          "flo_entry_id": "Flo account"
+        },
+        "data_description": {
+          "flo_entry_id": "The Flo integration entry whose devices report Flo Detect events."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Flo Detect is already set up for this Flo account.",
+      "flo_not_loaded": "Set up the Flo integration first, then add Flo Detect."
+    }
+  },
+  "entity": {
+    "event": {
+      "water_use": {
+        "name": "Water use",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "faucet": "Faucet",
+              "shower": "Shower",
+              "bathtub": "Bathtub",
+              "toilet": "Toilet",
+              "appliance": "Appliance",
+              "irrigation": "Irrigation",
+              "pool": "Pool",
+              "other": "Other"
+            }
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "flo_entry_missing": {
+      "message": "The Flo config entry this Flo Detect entry belongs to no longer exists. Remove Flo Detect and add it again."
+    },
+    "flo_not_loaded": {
+      "message": "The Flo integration is not loaded yet."
+    }
+  }
+}
