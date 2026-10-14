@@ -170,7 +170,7 @@ async def test_entity_attaches_to_flo_device(
     await hass.async_block_till_done()
 
     device_registry = dr.async_get(hass)
-    flo_device = device_registry.async_get_device(identifiers={("flo", DEVICE_ID)})
+    (flo_device,) = dr.async_entries_for_config_entry(device_registry, FLO_ENTRY_ID)
     entry = er.async_get(hass).async_get(_entity_id(hass))
     assert entry.device_id == flo_device.id
     assert flo_device.config_entries == {FLO_ENTRY_ID}
@@ -180,11 +180,15 @@ async def test_entity_attaches_to_flo_device(
 async def test_removes_device_left_by_old_version(
     hass: HomeAssistant, config_entry: MockConfigEntry
 ) -> None:
-    """A device only this entry owns (created by 0.1.0) is removed on setup."""
+    """A device only this entry owns (created by 0.1.0) is removed on setup.
+
+    Version 0.1.0 gave it the Flo device's identifier, which no longer merges
+    devices across config entries.
+    """
     device_registry = dr.async_get(hass)
     stray = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
-        identifiers={("flo_detect", "stray")},
+        identifiers={("flo", DEVICE_ID)},
         name="Flo Detect (Flo account)",
     )
     assert await hass.config_entries.async_setup(config_entry.entry_id)
