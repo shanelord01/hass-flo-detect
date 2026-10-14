@@ -195,8 +195,9 @@ class FloDetectDataUpdateCoordinator(DataUpdateCoordinator[list[FloDetectEvent]]
         if self._last_end is None:
             for event in settled:
                 self._remember(event.event_id)
-            if settled:
-                self._last_end = max(event.end for event in settled)
+            # With no history yet, start from now: otherwise the next poll would
+            # count as the first run again and swallow its events.
+            self._last_end = max((event.end for event in settled), default=cutoff)
             self._store.async_delay_save(self._stored_state, 5)
             LOGGER.debug(
                 "First Flo Detect fetch for %s: %s existing events marked as seen",
