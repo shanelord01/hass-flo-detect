@@ -1,2 +1,2 @@
 aioflo==2026.9.4
-pytest-homeassistant-custom-component==0.13.374
+pytest-homeassistant-custom-component==0.13.375
